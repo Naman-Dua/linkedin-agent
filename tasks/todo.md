@@ -41,19 +41,19 @@
 
 ## Phase 1: Ingest & Context Builder
 
-- [ ] **Task 1.1: GitHub Ingest Module**
+- [x] **Task 1.1: GitHub Ingest Module**
   - **Description:** Implement `ingest/github.py` using `httpx` to fetch repo metadata, README, languages, commits, and releases with ETag caching.
-- [ ] **Task 1.2: Local Notes Ingest**
+- [x] **Task 1.2: Local Notes Ingest**
   - **Description:** Implement `ingest/local.py` to parse optional notes in `projects/*.md`.
-- [ ] **Task 1.3: Redaction Pass**
+- [x] **Task 1.3: Redaction Pass**
   - **Description:** Implement regex security redaction for keys, tokens, emails in `context/redaction.py`.
-- [ ] **Task 1.4: Context Assembly**
+- [x] **Task 1.4: Context Assembly**
   - **Description:** Implement `context/builder.py` assembling `ProjectContext` and trimming to token budget.
-- [ ] **Task 1.5: Ingest & Context Tests**
+- [x] **Task 1.5: Ingest & Context Tests**
   - **Description:** Write unit tests with recorded fixtures for all Phase 1 components.
-- [ ] **Checkpoint 1: Phase 1 Verification**
-  - [ ] `agent context --repo <name>` prints clean summary
-  - [ ] All tests pass; linters clean
+- [x] **Checkpoint 1: Phase 1 Verification**
+  - [x] `agent context --repo <name>` prints clean summary
+  - [x] All tests pass; linters clean
 
 ---
 

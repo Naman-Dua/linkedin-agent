@@ -44,4 +44,4 @@ src/linkedin_agent/{ingest,context,llm,drafter,approval,publisher,store,audit}/
 ```
 
 ## Current Phase
-Phase 1 → Ingest + Context
+Phase 2 → Drafter

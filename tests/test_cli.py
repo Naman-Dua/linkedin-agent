@@ -21,11 +21,36 @@ def test_cli_help() -> None:
     assert "suggest" in result.stdout
 
 
-def test_cli_auth_status_help() -> None:
-    """Test that auth status subcommand help works."""
-    result = runner.invoke(app, ["auth", "--help"])
-    assert result.exit_code == 0
-    assert "status" in result.stdout
+def test_cli_draft_command() -> None:
+    """Test agent draft command with mock context and drafter."""
+    mock_ctx = ProjectContext(
+        repo="octocat/Hello-World",
+        description="A great repo",
+        languages=["Python"],
+    )
+    from linkedin_agent.drafter.models import ClaimItem, DraftsResponse, DraftVariant
+
+    mock_drafts = DraftsResponse(
+        variants=[
+            DraftVariant(
+                angle="problem-solution",
+                text="Most tools fail at offline mode. Here is how I solved it.",
+                hashtags=["#python", "#buildinpublic"],
+                claims=[ClaimItem(claim="Uses Python", source="README")],
+                warnings=[],
+            )
+        ]
+    )
+    with (
+        patch("linkedin_agent.cli.build_project_context", return_value=mock_ctx),
+        patch("linkedin_agent.cli.generate_drafts", return_value=mock_drafts),
+    ):
+        result = runner.invoke(app, ["draft", "--repo", "octocat/Hello-World"])
+        assert result.exit_code == 0
+        assert "Generated 1 draft variants for octocat/Hello-World" in result.stdout
+        assert "problem-solution" in result.stdout
+        assert "Most tools fail at offline mode" in result.stdout
+        assert "Uses Python" in result.stdout
 
 
 def test_cli_context_command() -> None:

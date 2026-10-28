@@ -3,7 +3,9 @@
 import typer
 
 from linkedin_agent.context.builder import build_project_context
+from linkedin_agent.drafter.drafter import generate_drafts
 from linkedin_agent.ingest.github import GitHubError
+from linkedin_agent.llm.base import LLMError
 
 app = typer.Typer(
     name="agent",
@@ -57,9 +59,50 @@ def context(
 @app.command()
 def draft(
     repo: str = typer.Option(..., "--repo", "-r", help="Repository name to draft for"),
+    instruction: str = typer.Option(
+        None, "--instruction", "-i", help="Optional drafting angle or prompt"
+    ),
 ) -> None:
     """Generate grounded LinkedIn post variants for a repository."""
-    typer.echo(f"Drafting post variants for repository: {repo}")
+    try:
+        ctx = build_project_context(repo)
+    except GitHubError as e:
+        typer.secho(f"Error fetching context: {e}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from e
+
+    try:
+        drafts = generate_drafts(ctx, instruction=instruction)
+    except LLMError as e:
+        typer.secho(f"Error calling LLM: {e}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from e
+
+    if not drafts.variants:
+        typer.secho("\nNo drafts could be generated.", fg=typer.colors.YELLOW)
+        if drafts.missing_context:
+            typer.echo("Missing context:")
+            for m in drafts.missing_context:
+                typer.echo(f"  - {m}")
+        return
+
+    typer.secho(
+        f"\nGenerated {len(drafts.variants)} draft variants for {ctx.repo}:\n",
+        fg=typer.colors.GREEN,
+        bold=True,
+    )
+    for idx, v in enumerate(drafts.variants, start=1):
+        typer.secho(f"--- [Variant {idx}: {v.angle}] ---", fg=typer.colors.CYAN, bold=True)
+        typer.echo(v.text)
+        if v.hashtags:
+            typer.secho(f"\nHashtags: {' '.join(v.hashtags)}", fg=typer.colors.BLUE)
+        if v.claims:
+            typer.secho("\nCited Claims:", fg=typer.colors.YELLOW)
+            for c in v.claims:
+                typer.echo(f"  • {c.claim} (Source: {c.source})")
+        if v.warnings:
+            typer.secho("\nWarnings:", fg=typer.colors.RED)
+            for w in v.warnings:
+                typer.echo(f"  ⚠ {w}")
+        typer.echo("\n" + "=" * 50 + "\n")
 
 
 @app.command()
