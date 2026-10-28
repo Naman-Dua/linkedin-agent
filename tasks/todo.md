@@ -129,9 +129,9 @@
 
 ## Phase 7: Hardening & Voice Tuning
 
-- [ ] **Task 7.1: Few-Shot Profiles**
+- [x] **Task 7.1: Few-Shot Profiles**
   - **Description:** Tune prompt with user's past post examples.
-- [ ] **Task 7.2: Resilience & Network Error Tests**
+- [x] **Task 7.2: Resilience & Network Error Tests**
   - **Description:** Test rate limiting, 401 handling, and idempotency recovery.
-- [ ] **Checkpoint 7: Ready for Production**
-  - [ ] All tests pass, DRY_RUN test checklist verified
+- [x] **Checkpoint 7: Ready for Production**
+  - [x] All tests pass, DRY_RUN test checklist verified

@@ -44,4 +44,4 @@ src/linkedin_agent/{ingest,context,llm,drafter,approval,publisher,store,audit}/
 ```
 
 ## Current Phase
-Phase 7 → Hardening
+Complete (Phases 0–7 Implemented, Hardened & Verified)
