@@ -118,12 +118,12 @@
 
 ## Phase 6: Telegram Approval UI
 
-- [ ] **Task 6.1: Telegram Bot Integration**
+- [x] **Task 6.1: Telegram Bot Integration**
   - **Description:** Implement `approval/telegram.py` with inline buttons for draft approval/editing/skipping.
-- [ ] **Task 6.2: Whitelist & Alerts**
+- [x] **Task 6.2: Whitelist & Alerts**
   - **Description:** Strict chat ID checking and token expiration alerts.
-- [ ] **Checkpoint 6: Phase 6 Verification**
-  - [ ] Interactive approval loop verified over Telegram
+- [x] **Checkpoint 6: Phase 6 Verification**
+  - [x] Interactive approval loop verified over Telegram
 
 ---
 

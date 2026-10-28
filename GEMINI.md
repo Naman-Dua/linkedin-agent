@@ -44,4 +44,4 @@ src/linkedin_agent/{ingest,context,llm,drafter,approval,publisher,store,audit}/
 ```
 
 ## Current Phase
-Phase 6 → Telegram Approval
+Phase 7 → Hardening

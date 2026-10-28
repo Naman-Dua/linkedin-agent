@@ -21,6 +21,14 @@ def build_system_prompt(profile: ProfileConfig) -> str:
     max_c = profile.length.max_chars
     hard_c = profile.length.hard_cap
 
+    examples_section = ""
+    if profile.examples:
+        examples_section = "\nEXAMPLE HIGH-SIGNAL POSTS FOR REFERENCE:\n"
+        for ex in profile.examples:
+            angle = ex.get("angle", "example")
+            text = ex.get("text", "")
+            examples_section += f"\n--- Example ({angle}) ---\n{text}\n"
+
     return f"""You are an expert LinkedIn post writer for {profile.name} ({profile.role}).
 Tone: {profile.tone}.
 Target Audience: {profile.audience}.
@@ -39,7 +47,7 @@ STRICT CONTENT RULES:
     - Variant 1: Problem -> Solution
     - Variant 2: Deep-dive into a technical challenge or architecture decision
     - Variant 3: Key lesson learned or milestone reflection
-
+{examples_section}
 OUTPUT FORMAT:
 Respond with ONLY valid JSON adhering to this exact schema:
 {{

@@ -47,14 +47,14 @@ def audit_variant_claims(variant: DraftVariant, ctx: ProjectContext) -> list[str
         r"\b\d+(?:\.\d+)?(?:k|m|%|x|ms|s)?\b",
         re.IGNORECASE,
     )
-    text_numbers = {m.group(0).lower() for m in metric_pattern.finditer(variant.text)}
+    text_numbers = {m.group(0) for m in metric_pattern.finditer(variant.text)}
     corpus_numbers = {m.group(0).lower() for m in metric_pattern.finditer(corpus)}
 
     for num in text_numbers:
         # Ignore common non-metric small numbers like 1, 2, 3 in bullet points
-        if num in {"1", "2", "3", "4", "5", "10", "20"}:
+        if num.lower() in {"1", "2", "3", "4", "5", "10", "20"}:
             continue
-        if num not in corpus_numbers:
+        if num.lower() not in corpus_numbers:
             warnings.append(f"Potentially unverified metric or number: '{num}'")
 
     # 2. Check each declared claim item
