@@ -2,10 +2,14 @@
 
 import typer
 
+from linkedin_agent.approval.cli import present_draft_for_approval
+from linkedin_agent.approval.gate import ApprovalGate
+from linkedin_agent.audit.log import audit_log
 from linkedin_agent.context.builder import build_project_context
 from linkedin_agent.drafter.drafter import generate_drafts
 from linkedin_agent.ingest.github import GitHubError
 from linkedin_agent.llm.base import LLMError
+from linkedin_agent.store.db import Database
 
 app = typer.Typer(
     name="agent",
@@ -113,9 +117,64 @@ def run(
         "--dry-run/--no-dry-run",
         help="Run without publishing to LinkedIn (default: True)",
     ),
+    variant_no: int = typer.Option(1, "--variant", "-v", help="Variant index to review (1-3)"),
 ) -> None:
     """Run full pipeline: ingest, draft, human approval, and optional publish."""
-    typer.echo(f"Running pipeline for {repo} (dry_run={dry_run})")
+    db = Database()
+    gate = ApprovalGate(db)
+
+    # 1. Ingest context
+    try:
+        ctx = build_project_context(repo)
+    except GitHubError as e:
+        typer.secho(f"Error fetching context: {e}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from e
+
+    # 2. Draft post variants
+    try:
+        drafts = generate_drafts(ctx)
+    except LLMError as e:
+        typer.secho(f"Error calling LLM: {e}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from e
+
+    if not drafts.variants:
+        typer.secho("No draft variants could be generated.", fg=typer.colors.YELLOW)
+        return
+
+    idx = max(0, min(variant_no - 1, len(drafts.variants) - 1))
+    chosen_variant = drafts.variants[idx]
+
+    # 3. Present for human approval
+    approved_draft = present_draft_for_approval(gate, repo, idx + 1, chosen_variant)
+    if not approved_draft:
+        typer.echo("Pipeline stopped without approved draft.")
+        return
+
+    # 4. Mandatory Cryptographic Gate Check
+    approval = gate.verify_can_publish(approved_draft.text)
+
+    # 5. Publish or Dry Run
+    if dry_run:
+        audit_log(
+            "publish_dry_run",
+            {
+                "draft_id": approved_draft.id,
+                "repo": repo,
+                "sha256": approval.text_sha256,
+                "text_snippet": approved_draft.text[:120],
+            },
+        )
+        typer.secho(
+            f"\n[DRY RUN] Content hash {approval.text_sha256[:8]} verified.",
+            fg=typer.colors.GREEN,
+            bold=True,
+        )
+        typer.secho(
+            "Payload logged to audit log. Publishing skipped because --dry-run is active.",
+            fg=typer.colors.CYAN,
+        )
+    else:
+        typer.secho("Live publish not yet enabled in this phase.", fg=typer.colors.YELLOW)
 
 
 auth_app = typer.Typer(help="Manage authentication and token status", no_args_is_help=True)

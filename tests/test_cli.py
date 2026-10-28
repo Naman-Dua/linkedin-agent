@@ -1,5 +1,6 @@
 """Basic smoke tests for CLI entrypoint."""
 
+from pathlib import Path
 from unittest.mock import patch
 
 from typer.testing import CliRunner
@@ -51,6 +52,34 @@ def test_cli_draft_command() -> None:
         assert "problem-solution" in result.stdout
         assert "Most tools fail at offline mode" in result.stdout
         assert "Uses Python" in result.stdout
+
+
+def test_cli_run_dry_run(tmp_path: Path) -> None:
+    """Test full pipeline run with --dry-run flag."""
+    from linkedin_agent.drafter.models import DraftsResponse, DraftVariant
+    from linkedin_agent.store.db import Database
+
+    db = Database(tmp_path / "cli_test.db")
+    mock_ctx = ProjectContext(repo="octocat/Hello-World")
+    mock_drafts = DraftsResponse(
+        variants=[
+            DraftVariant(
+                angle="problem-solution",
+                text="A tested and validated post about software engineering.",
+            )
+        ]
+    )
+
+    with (
+        patch("linkedin_agent.cli.Database", return_value=db),
+        patch("linkedin_agent.cli.build_project_context", return_value=mock_ctx),
+        patch("linkedin_agent.cli.generate_drafts", return_value=mock_drafts),
+        patch("typer.prompt", return_value="A"),  # Auto-approve
+    ):
+        result = runner.invoke(app, ["run", "--repo", "octocat/Hello-World", "--dry-run"])
+        assert result.exit_code == 0
+        assert "[DRY RUN]" in result.stdout
+        assert "verified" in result.stdout
 
 
 def test_cli_context_command() -> None:

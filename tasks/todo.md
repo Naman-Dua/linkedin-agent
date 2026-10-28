@@ -59,17 +59,17 @@
 
 ## Phase 2: Drafter & Claims Checking
 
-- [ ] **Task 2.1: LLM Client Interface & Providers**
+- [x] **Task 2.1: LLM Client Interface & Providers**
   - **Description:** Create `llm/base.py` interface and Gemini/Claude implementation.
-- [ ] **Task 2.2: Drafter Prompt & Generation**
+- [x] **Task 2.2: Drafter Prompt & Generation**
   - **Description:** Create `drafter/drafter.py` assembling prompt from `SKILL.md` + `profile.yaml` + context to produce structured JSON variants.
-- [ ] **Task 2.3: Claims Checking Pass**
+- [x] **Task 2.3: Claims Checking Pass**
   - **Description:** Create `drafter/claims_check.py` to verify grounded facts and flag unsupported claims.
-- [ ] **Task 2.4: Drafter Unit Tests**
+- [x] **Task 2.4: Drafter Unit Tests**
   - **Description:** Test variant generation and claims validation with mock responses.
-- [ ] **Checkpoint 2: Phase 2 Verification**
-  - [ ] `agent draft --repo <name>` outputs 2–3 grounded variants with cited claims
-  - [ ] All tests pass; linters clean
+- [x] **Checkpoint 2: Phase 2 Verification**
+  - [x] `agent draft --repo <name>` outputs 2–3 grounded variants with cited claims
+  - [x] All tests pass; linters clean
 
 ---
 
