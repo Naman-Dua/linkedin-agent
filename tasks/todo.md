@@ -91,15 +91,15 @@
 
 ## Phase 4: LinkedIn Publisher
 
-- [ ] **Task 4.1: OAuth 2.0 Flow & Token Storage**
+- [x] **Task 4.1: OAuth 2.0 Flow & Token Storage**
   - **Description:** Implement local OAuth callback server and token persistence in `publisher/linkedin.py`.
-- [ ] **Task 4.2: LinkedIn Posts API Client**
+- [x] **Task 4.2: LinkedIn Posts API Client**
   - **Description:** Implement `create_post()` with idempotency key, REST API headers, and error handling.
-- [ ] **Task 4.3: Auth Status & Expiry Monitoring**
+- [x] **Task 4.3: Auth Status & Expiry Monitoring**
   - **Description:** Implement `agent auth status` and expiry calculations.
-- [ ] **Checkpoint 4: Phase 4 Verification**
-  - [ ] Real or mock post creates post and records URN
-  - [ ] All tests pass; linters clean
+- [x] **Checkpoint 4: Phase 4 Verification**
+  - [x] Real or mock post creates post and records URN
+  - [x] All tests pass; linters clean
 
 ---
 

@@ -8,6 +8,7 @@ import typer
 from linkedin_agent.approval.cli import present_draft_for_approval
 from linkedin_agent.approval.gate import ApprovalGate
 from linkedin_agent.context.builder import build_project_context
+from linkedin_agent.context.selector import rank_repositories
 from linkedin_agent.drafter.drafter import generate_drafts
 from linkedin_agent.ingest.github import GitHubClient, GitHubError
 from linkedin_agent.llm.base import LLMError
@@ -262,9 +263,30 @@ def auth_status() -> None:
 
 
 @app.command()
-def suggest() -> None:
+def suggest(
+    user: str = typer.Option(None, "--user", "-u", help="GitHub username to inspect"),
+    limit: int = typer.Option(5, "--limit", "-l", help="Number of suggestions to return"),
+) -> None:
     """Suggest which repository to post about next based on activity and history."""
-    typer.echo("Analyzing repositories for suggestions...")
+    gh = GitHubClient()
+    db = Database()
+
+    try:
+        ranked = rank_repositories(gh, db, user=user)
+    except GitHubError as e:
+        typer.secho(f"Error listing repositories: {e}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from e
+
+    if not ranked:
+        typer.secho("No repositories found matching current criteria.", fg=typer.colors.YELLOW)
+        return
+
+    typer.secho("\n=== Suggested Repositories for Next Post ===", fg=typer.colors.CYAN, bold=True)
+    for idx, item in enumerate(ranked[:limit], start=1):
+        color = typer.colors.GREEN if not item.is_posted else typer.colors.WHITE
+        typer.secho(f"#{idx} [{item.total_score:.2f}] {item.repo}", fg=color, bold=True)
+        typer.echo(f"    • {item.reason.capitalize()}")
+    typer.echo("")
 
 
 if __name__ == "__main__":

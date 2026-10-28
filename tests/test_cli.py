@@ -96,6 +96,30 @@ def test_cli_auth_status(tmp_path: Path) -> None:
         assert "LinkedIn: Active" in result.stdout
 
 
+def test_cli_suggest_command() -> None:
+    """Test suggest CLI command."""
+    from linkedin_agent.context.selector import RepoScore
+
+    mock_ranked = [
+        RepoScore(
+            repo="octocat/Hello-World",
+            total_score=0.95,
+            activity_score=1.0,
+            unposted_score=1.0,
+            readme_score=1.0,
+            is_posted=False,
+            last_pushed_days_ago=2,
+            reason="Not yet posted, pushed 2d ago",
+        )
+    ]
+    with patch("linkedin_agent.cli.rank_repositories", return_value=mock_ranked):
+        result = runner.invoke(app, ["suggest"])
+        assert result.exit_code == 0
+        assert "Suggested Repositories" in result.stdout
+        assert "octocat/Hello-World" in result.stdout
+        assert "0.95" in result.stdout
+
+
 def test_cli_context_command() -> None:
     """Test agent context command with mock data."""
     mock_ctx = ProjectContext(
