@@ -2,6 +2,9 @@
 
 import typer
 
+from linkedin_agent.context.builder import build_project_context
+from linkedin_agent.ingest.github import GitHubError
+
 app = typer.Typer(
     name="agent",
     help="LinkedIn Post Agent — reads GitHub repos & notes, drafts posts under human approval.",
@@ -14,7 +17,41 @@ def context(
     repo: str = typer.Option(..., "--repo", "-r", help="Repository name to inspect"),
 ) -> None:
     """Fetch and display summarized context for a repository."""
-    typer.echo(f"Inspecting context for repository: {repo}")
+    try:
+        ctx = build_project_context(repo)
+    except GitHubError as e:
+        typer.secho(f"Error fetching repository context: {e}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from e
+
+    typer.secho(f"\n=== Project Context: {ctx.repo} ===", fg=typer.colors.CYAN, bold=True)
+    if ctx.description:
+        typer.echo(f"Description: {ctx.description}")
+    if ctx.languages:
+        typer.echo(f"Languages: {', '.join(ctx.languages)}")
+    if ctx.topics:
+        typer.echo(f"Topics: {', '.join(ctx.topics)}")
+    typer.echo(f"Stars: {ctx.stars} | Last Push: {ctx.last_push}")
+    if ctx.homepage:
+        typer.echo(f"Homepage: {ctx.homepage}")
+
+    if ctx.recent_commits:
+        typer.secho("\nRecent Commits:", fg=typer.colors.YELLOW)
+        for c in ctx.recent_commits:
+            typer.echo(f"  [{c.sha}] {c.msg} ({c.date[:10]})")
+
+    if ctx.releases:
+        typer.secho("\nReleases:", fg=typer.colors.YELLOW)
+        for r in ctx.releases:
+            typer.echo(f"  [{r.tag}] {r.name} ({r.date[:10]})")
+
+    if ctx.local_notes:
+        typer.secho("\nLocal Notes:", fg=typer.colors.GREEN)
+        typer.echo(ctx.local_notes[:500] + ("..." if len(ctx.local_notes) > 500 else ""))
+
+    if ctx.readme_excerpt:
+        typer.secho("\nREADME Excerpt:", fg=typer.colors.MAGENTA)
+        typer.echo(ctx.readme_excerpt[:500] + ("..." if len(ctx.readme_excerpt) > 500 else ""))
+    typer.echo("")
 
 
 @app.command()

@@ -2,21 +2,21 @@
 
 ## Phase 0: Setup & Scaffolding
 
-- [ ] **Task 0.1: Initialize Git and Ignore Rules**
+- [x] **Task 0.1: Initialize Git and Ignore Rules**
   - **Description:** Initialize git repo and configure `.gitignore` for `.env`, `*.db`, `tokens*`, cache and build files.
   - **Acceptance criteria:**
     - Git repository initialized.
     - `.gitignore` ignores `.env`, `*.db`, `tokens*`, `.pytest_cache`, `.ruff_cache`, `.mypy_cache`, `__pycache__`.
   - **Verification:** `git status` shows clean tracking; ignored files are ignored.
 
-- [ ] **Task 0.2: Project Dependencies & Tooling Configuration**
+- [x] **Task 0.2: Project Dependencies & Tooling Configuration**
   - **Description:** Create `pyproject.toml` with dependencies (`httpx`, `pydantic>=2.0`, `typer>=0.9.0`, `pyyaml`, `python-telegram-bot>=20.0`, `pytest`, `ruff`, `mypy`) and tool configurations.
   - **Acceptance criteria:**
     - `pyproject.toml` defines package metadata, scripts entrypoint `agent = "linkedin_agent.cli:app"`.
     - Strict `mypy` and `ruff` rules configured according to `RULES.md`.
   - **Verification:** `pip install -e .[dev]` installs cleanly.
 
-- [ ] **Task 0.3: Configuration Templates and Skeletons**
+- [x] **Task 0.3: Configuration Templates and Skeletons**
   - **Description:** Create `.env.example`, `profile.yaml`, and `config.yaml` skeletons.
   - **Acceptance criteria:**
     - `.env.example` lists all required environment variables with comments.
@@ -24,18 +24,18 @@
     - `config.yaml` defines repo selection filters, allowlist/denylist, and private repo settings.
   - **Verification:** Files exist and are valid YAML / env format.
 
-- [ ] **Task 0.4: Package Scaffolding & Initial Entrypoint**
+- [x] **Task 0.4: Package Scaffolding & Initial Entrypoint**
   - **Description:** Create `src/linkedin_agent/` module structure with `cli.py`, `__init__.py`, `__main__.py`, and initial tests.
   - **Acceptance criteria:**
     - Modules `ingest`, `context`, `llm`, `drafter`, `approval`, `publisher`, `store`, `audit` exist with `__init__.py`.
     - `cli.py` has Typer app with `context`, `draft`, `run`, `auth` command placeholders.
   - **Verification:** `python -m linkedin_agent --help` outputs help menu; `pytest` passes initial test.
 
-- [ ] **Checkpoint 0: Phase 0 Completion**
-  - [ ] `python -m linkedin_agent --help` succeeds
-  - [ ] `ruff check .` passes
-  - [ ] `mypy src` passes
-  - [ ] Update `GEMINI.md` current phase to Phase 1
+- [x] **Checkpoint 0: Phase 0 Completion**
+  - [x] `python -m linkedin_agent --help` succeeds
+  - [x] `ruff check .` passes
+  - [x] `mypy src` passes
+  - [x] Update `GEMINI.md` current phase to Phase 1
 
 ---
 
