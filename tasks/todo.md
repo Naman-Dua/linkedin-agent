@@ -105,14 +105,14 @@
 
 ## Phase 5: Selection & Scheduling
 
-- [ ] **Task 5.1: Repo Ranking Engine**
+- [x] **Task 5.1: Repo Ranking Engine**
   - **Description:** Implement `context/selector.py` scoring repos based on activity, unposted status, and README.
-- [ ] **Task 5.2: `agent suggest` Command**
+- [x] **Task 5.2: `agent suggest` Command**
   - **Description:** CLI command suggesting the next repo to post about.
-- [ ] **Task 5.3: Repost Prevention Guards**
+- [x] **Task 5.3: Repost Prevention Guards**
   - **Description:** Prevent duplicate posts for previously covered repos/commits.
-- [ ] **Checkpoint 5: Phase 5 Verification**
-  - [ ] `agent suggest` accurately ranks repositories
+- [x] **Checkpoint 5: Phase 5 Verification**
+  - [x] `agent suggest` accurately ranks repositories
 
 ---
 
