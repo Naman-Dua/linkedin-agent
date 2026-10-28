@@ -1,0 +1,37 @@
+# Profile configuration for LinkedIn Post Agent
+name: "Naman"
+role: "Full-Stack & Mobile Developer"
+tone: "builder-to-builder, plain language, direct, authentic, technical"
+audience: "developers, engineering leads, founders"
+
+length:
+  min_chars: 900
+  max_chars: 1500
+  hard_cap: 3000
+
+max_emojis: 2
+
+hashtags:
+  default:
+    - "#buildinpublic"
+    - "#softwareengineering"
+    - "#devcommunity"
+  max_count: 5
+
+banned_phrases:
+  - "excited to announce"
+  - "game-changer"
+  - "revolutionary"
+  - "thrilled to share"
+  - "humbled and honored"
+  - "superlative"
+  - "agree?"
+  - "blazing fast"
+  - "production-ready" # unless context explicitly proves it
+
+cta_styles:
+  - "Check out the repo here: {repo_url}"
+  - "What approach would you have taken? Repo link in comments/post: {repo_url}"
+  - "Curious how you handle {challenge} in your stack. Repo: {repo_url}"
+
+examples: []

@@ -1,0 +1,15 @@
+# Repository selection & access configuration
+repos:
+  # Explicit allowlist. If empty, all public repos for the authenticated user/owner are considered.
+  allowlist: []
+  
+  # Repositories to always ignore.
+  denylist: []
+  
+  # Private repositories must be explicitly opted into.
+  allow_private: []
+
+selection_weights:
+  activity: 0.4     # weight given to recent pushes/commits
+  unposted: 0.4     # weight given to repos not yet featured
+  readme_quality: 0.2 # weight given to README completeness
