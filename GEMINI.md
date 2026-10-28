@@ -44,4 +44,4 @@ src/linkedin_agent/{ingest,context,llm,drafter,approval,publisher,store,audit}/
 ```
 
 ## Current Phase
-Phase 3 → State + Approval
+Phase 4 → LinkedIn Publisher

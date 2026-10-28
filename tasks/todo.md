@@ -75,17 +75,17 @@
 
 ## Phase 3: State & CLI Approval Gate
 
-- [ ] **Task 3.1: SQLite Database Storage**
+- [x] **Task 3.1: SQLite Database Storage**
   - **Description:** Implement schema in `store/db.py` for drafts, approvals, posts.
-- [ ] **Task 3.2: Approval State Machine & Content Hash**
+- [x] **Task 3.2: Approval State Machine & Content Hash**
   - **Description:** Implement `approval/gate.py` enforcing `text_sha256` binding.
-- [ ] **Task 3.3: CLI Approval UI & JSONL Audit Log**
+- [x] **Task 3.3: CLI Approval UI & JSONL Audit Log**
   - **Description:** Implement interactive CLI approval loop in `approval/cli.py` and audit logger in `audit/log.py`.
-- [ ] **Task 3.4: Approval Invariant Tests**
+- [x] **Task 3.4: Approval Invariant Tests**
   - **Description:** Test that edits reset approval and unapproved text cannot proceed.
-- [ ] **Checkpoint 3: Phase 3 Verification**
-  - [ ] `agent run --repo <name> --dry-run` completes loop and logs payload
-  - [ ] All tests pass; linters clean
+- [x] **Checkpoint 3: Phase 3 Verification**
+  - [x] `agent run --repo <name> --dry-run` completes loop and logs payload
+  - [x] All tests pass; linters clean
 
 ---
 

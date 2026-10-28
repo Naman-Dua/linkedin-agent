@@ -82,6 +82,20 @@ def test_cli_run_dry_run(tmp_path: Path) -> None:
         assert "verified" in result.stdout
 
 
+def test_cli_auth_status(tmp_path: Path) -> None:
+    """Test auth status CLI command."""
+    from linkedin_agent.store.db import Database
+
+    db = Database(tmp_path / "auth_status.db")
+    db.save_token("linkedin", "tok_valid", "2026-12-31T00:00:00Z")
+
+    with patch("linkedin_agent.cli.Database", return_value=db):
+        result = runner.invoke(app, ["auth", "status"])
+        assert result.exit_code == 0
+        assert "Authentication & Credentials Status" in result.stdout
+        assert "LinkedIn: Active" in result.stdout
+
+
 def test_cli_context_command() -> None:
     """Test agent context command with mock data."""
     mock_ctx = ProjectContext(

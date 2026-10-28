@@ -1,14 +1,18 @@
 """Command-line interface for LinkedIn Post Agent."""
 
+import os
+from datetime import UTC, datetime
+
 import typer
 
 from linkedin_agent.approval.cli import present_draft_for_approval
 from linkedin_agent.approval.gate import ApprovalGate
-from linkedin_agent.audit.log import audit_log
 from linkedin_agent.context.builder import build_project_context
 from linkedin_agent.drafter.drafter import generate_drafts
-from linkedin_agent.ingest.github import GitHubError
+from linkedin_agent.ingest.github import GitHubClient, GitHubError
 from linkedin_agent.llm.base import LLMError
+from linkedin_agent.publisher.linkedin import LinkedInPublisher, LinkedInPublishError
+from linkedin_agent.publisher.oauth import run_oauth_flow
 from linkedin_agent.store.db import Database
 
 app = typer.Typer(
@@ -153,38 +157,108 @@ def run(
     # 4. Mandatory Cryptographic Gate Check
     approval = gate.verify_can_publish(approved_draft.text)
 
-    # 5. Publish or Dry Run
-    if dry_run:
-        audit_log(
-            "publish_dry_run",
-            {
-                "draft_id": approved_draft.id,
-                "repo": repo,
-                "sha256": approval.text_sha256,
-                "text_snippet": approved_draft.text[:120],
-            },
+    # 5. Publish via LinkedInPublisher
+    publisher = LinkedInPublisher(db)
+    try:
+        result = publisher.publish_post(
+            draft_id=approved_draft.id,
+            repo=repo,
+            text=approved_draft.text,
+            dry_run=dry_run,
         )
+    except LinkedInPublishError as e:
+        typer.secho(f"Publish failed: {e}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from e
+
+    if result.is_dry_run:
         typer.secho(
             f"\n[DRY RUN] Content hash {approval.text_sha256[:8]} verified.",
             fg=typer.colors.GREEN,
             bold=True,
         )
         typer.secho(
-            "Payload logged to audit log. Publishing skipped because --dry-run is active.",
+            f"Mock URN: {result.urn}\nAudit log updated. Publication skipped (--dry-run).",
             fg=typer.colors.CYAN,
         )
     else:
-        typer.secho("Live publish not yet enabled in this phase.", fg=typer.colors.YELLOW)
+        typer.secho(f"\n✓ Post published live: {result.urn}", fg=typer.colors.GREEN, bold=True)
+        if result.url:
+            typer.echo(f"URL: {result.url}")
 
 
 auth_app = typer.Typer(help="Manage authentication and token status", no_args_is_help=True)
 app.add_typer(auth_app, name="auth")
 
 
+@auth_app.command(name="login")
+def auth_login(
+    port: int = typer.Option(8080, "--port", "-p", help="Local callback port"),
+) -> None:
+    """Run interactive LinkedIn OAuth login flow."""
+    db = Database()
+    try:
+        run_oauth_flow(db, port=port)
+        typer.secho("✓ Successfully authenticated with LinkedIn!", fg=typer.colors.GREEN, bold=True)
+    except Exception as e:
+        typer.secho(f"Authentication failed: {e}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from e
+
+
 @auth_app.command(name="status")
 def auth_status() -> None:
     """Check status and expiration of GitHub and LinkedIn credentials."""
-    typer.echo("Checking authentication status...")
+    db = Database()
+    typer.secho("\n=== Authentication & Credentials Status ===", fg=typer.colors.CYAN, bold=True)
+
+    # 1. GitHub Check
+    gh_token = os.getenv("GITHUB_TOKEN")
+    if gh_token:
+        try:
+            gh_client = GitHubClient(token=gh_token)
+            user_data = gh_client._get("/user")
+            login = user_data.get("login", "unknown")
+            typer.secho(f"GitHub: Authenticated as '{login}' (Token set)", fg=typer.colors.GREEN)
+        except Exception as e:
+            typer.secho(f"GitHub: Token error ({e})", fg=typer.colors.RED)
+    else:
+        typer.secho(
+            "GitHub: No token configured (unauthenticated API only)",
+            fg=typer.colors.YELLOW,
+        )
+
+    # 2. LinkedIn Check
+    tok_info = db.get_token("linkedin")
+    if tok_info:
+        token, expires_at_str = tok_info
+        try:
+            expires_at = datetime.fromisoformat(expires_at_str)
+            days_left = (expires_at - datetime.now(UTC)).days
+            if days_left <= 0:
+                typer.secho(
+                    "LinkedIn: Token EXPIRED! Run 'agent auth login'.",
+                    fg=typer.colors.RED,
+                    bold=True,
+                )
+            elif days_left <= 7:
+                typer.secho(
+                    f"LinkedIn: Active (EXPIRES IN {days_left} DAYS! Re-auth recommended)",
+                    fg=typer.colors.YELLOW,
+                    bold=True,
+                )
+            else:
+                typer.secho(
+                    f"LinkedIn: Active ({days_left} days remaining until expiry)",
+                    fg=typer.colors.GREEN,
+                )
+        except Exception:
+            typer.secho("LinkedIn: Token present in database.", fg=typer.colors.GREEN)
+    elif os.getenv("LINKEDIN_ACCESS_TOKEN"):
+        typer.secho("LinkedIn: Access token loaded from environment.", fg=typer.colors.GREEN)
+    else:
+        typer.secho("LinkedIn: Not authenticated. Run 'agent auth login'.", fg=typer.colors.YELLOW)
+
+    dry_run_env = os.getenv("DRY_RUN", "true").lower() in ("1", "true", "yes")
+    typer.echo(f"\nDefault DRY_RUN: {dry_run_env}\n")
 
 
 @app.command()
