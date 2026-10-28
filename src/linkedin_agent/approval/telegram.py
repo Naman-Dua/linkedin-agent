@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import os
 from datetime import UTC, datetime
 from typing import Any
@@ -47,17 +48,19 @@ class TelegramApprovalBot:
 
     def format_draft_message(self, draft: DraftRecord, variant: DraftVariant | None = None) -> str:
         """Format a clean markdown message for Telegram."""
+        safe_text = html.escape(draft.text)
+        safe_repo = html.escape(draft.repo)
         lines = [
-            f"<b>Draft Variant {draft.variant_no} for {draft.repo}</b>",
+            f"<b>Draft Variant {draft.variant_no} for {safe_repo}</b>",
             "",
-            draft.text,
+            safe_text,
             "",
             f"<code>SHA256: {draft.text_sha256[:10]}...</code>",
         ]
         if variant and variant.warnings:
             lines.append("\n<b>Warnings:</b>")
             for w in variant.warnings:
-                lines.append(f"⚠ {w}")
+                lines.append(f"⚠ {html.escape(w)}")
         return "\n".join(lines)
 
     def get_approval_keyboard(self, draft_id: int) -> InlineKeyboardMarkup:
@@ -111,8 +114,9 @@ class TelegramApprovalBot:
                     "channel": "telegram",
                 },
             )
+            safe_text = html.escape(draft.text)
             await query.edit_message_text(
-                f"✓ <b>Draft #{draft_id} Approved!</b>\n\n{draft.text}\n\n"
+                f"✓ <b>Draft #{draft_id} Approved!</b>\n\n{safe_text}\n\n"
                 f"<code>Hash: {approval.text_sha256[:10]}</code>",
                 parse_mode="HTML",
             )
@@ -158,9 +162,10 @@ class TelegramApprovalBot:
             },
         )
 
+        safe_new_text = html.escape(new_draft.text)
         msg = (
             f"<b>Updated Draft #{new_draft.id} (Prior approval invalidated)</b>\n\n"
-            f"{new_draft.text}\n\n<code>SHA256: {new_draft.text_sha256[:10]}...</code>"
+            f"{safe_new_text}\n\n<code>SHA256: {new_draft.text_sha256[:10]}...</code>"
         )
         keyboard = self.get_approval_keyboard(new_draft.id)
         await update.message.reply_text(msg, parse_mode="HTML", reply_markup=keyboard)
