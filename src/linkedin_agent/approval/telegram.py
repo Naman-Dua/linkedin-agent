@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import html
+import logging
 import os
 from datetime import UTC, datetime
 from typing import Any
 
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.error import BadRequest
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -22,6 +24,8 @@ from linkedin_agent.audit.log import audit_log
 from linkedin_agent.drafter.models import DraftVariant
 from linkedin_agent.store.db import Database
 from linkedin_agent.store.models import DraftRecord
+
+logger = logging.getLogger(__name__)
 
 
 class TelegramApprovalBot:
@@ -99,44 +103,54 @@ class TelegramApprovalBot:
 
         draft = self.db.get_draft(draft_id)
         if not draft:
-            await query.edit_message_text("Error: Draft not found in database.")
+            try:
+                await query.edit_message_text("Error: Draft not found in database.")
+            except BadRequest:
+                pass
             return
 
         chat_id = str(update.effective_chat.id) if update.effective_chat else ""
 
-        if action == "approve":
-            approval = self.gate.approve_draft(draft_id, channel="telegram")
-            audit_log(
-                "draft_approved",
-                {
-                    "draft_id": draft_id,
-                    "repo": draft.repo,
-                    "sha256": approval.text_sha256,
-                    "channel": "telegram",
-                },
-            )
-            safe_text = html.escape(draft.text)
-            await query.edit_message_text(
-                f"✓ <b>Draft #{draft_id} Approved!</b>\n\n{safe_text}\n\n"
-                f"<code>Hash: {approval.text_sha256[:10]}</code>",
-                parse_mode="HTML",
-            )
+        try:
+            if action == "approve":
+                approval = self.gate.approve_draft(draft_id, channel="telegram")
+                audit_log(
+                    "draft_approved",
+                    {
+                        "draft_id": draft_id,
+                        "repo": draft.repo,
+                        "sha256": approval.text_sha256,
+                        "channel": "telegram",
+                    },
+                )
+                safe_text = html.escape(draft.text)
+                await query.edit_message_text(
+                    f"✓ <b>Draft #{draft_id} Approved!</b>\n\n{safe_text}\n\n"
+                    f"<code>Hash: {approval.text_sha256[:10]}</code>",
+                    parse_mode="HTML",
+                )
 
-        elif action == "edit":
-            self._pending_edits[chat_id] = draft_id
-            await query.message.reply_text(  # type: ignore[union-attr]
-                f"Please reply with the new text for Draft #{draft_id}:"
-            )
+            elif action == "edit":
+                self._pending_edits[chat_id] = draft_id
+                await query.message.reply_text(  # type: ignore[union-attr]
+                    f"Please reply with the new text for Draft #{draft_id}:"
+                )
 
-        elif action == "skip":
-            self.db.update_draft_status(draft_id, "SKIPPED")
-            audit_log("draft_skipped", {"draft_id": draft_id, "repo": draft.repo})
-            await query.edit_message_text(f"✕ Draft #{draft_id} was skipped.")
+            elif action == "skip":
+                self.db.update_draft_status(draft_id, "SKIPPED")
+                audit_log("draft_skipped", {"draft_id": draft_id, "repo": draft.repo})
+                await query.edit_message_text(f"✕ Draft #{draft_id} was skipped.")
 
-        elif action == "regen":
-            self.db.update_draft_status(draft_id, "REGENERATED")
-            audit_log("draft_regenerate_requested", {"draft_id": draft_id, "repo": draft.repo})
-            await query.edit_message_text(f"🔄 Regeneration requested for Draft #{draft_id}.")
+            elif action == "regen":
+                self.db.update_draft_status(draft_id, "REGENERATED")
+                audit_log("draft_regenerate_requested", {"draft_id": draft_id, "repo": draft.repo})
+                await query.edit_message_text(f"🔄 Regeneration requested for Draft #{draft_id}.")
+
+        except BadRequest as exc:
+            if "message is not modified" in str(exc).lower():
+                logger.debug("Duplicate button click ignored for draft #%s", draft_id)
+            else:
+                raise
 
     async def handle_reply_message(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
