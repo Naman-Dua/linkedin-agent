@@ -109,3 +109,26 @@ Phase 7: Hardening & Voice Tuning
 | Accidental unapproved post | Critical | Publisher strictly validates database `Approval` record with matching `text_sha256`. `DRY_RUN=true` default. |
 | Private repo secrets leaked | High | Private repos are opt-in only; automated regex redaction pass scrubs credentials and emails prior to prompt construction. |
 | LinkedIn API changes / breaks | Medium | LinkedIn API logic isolated in `publisher/linkedin.py`; clipboard fallback if API is unreachable. |
+
+
+---
+
+## Phase 8: Licensing & Documentation Excellence
+
+### Scope & Objectives
+1. Add standard open-source MIT License to the repository with copyright attributed to Naman Dua (2026).
+2. Update package metadata in `pyproject.toml` with the MIT license specification and PyPI classifiers.
+3. Transform `README.md` into an engaging, visually compelling, top-tier open-source repository landing page with status badges, interactive terminal preview, crisp value pillars, and a complete command reference.
+
+### Tasks
+- **Task 8.1: Create LICENSE and Update Package Metadata**
+  - Create `LICENSE` file with MIT text.
+  - Update `pyproject.toml` with license and classifiers.
+- **Task 8.2: Redesign README with Badges, Visual Flow, and Engaging Copy**
+  - Add shield badges (License, Python, Tests, Security, Lint, Types).
+  - Add "The Problem & The Solution" narrative.
+  - Add ASCII visual terminal interface mockup.
+  - Integrate full setup guide and command cheat sheet.
+- **Task 8.3: Verification and Remote Sync**
+  - Run full test suite (`pytest -q`), linter (`ruff check .`), type checker (`mypy src`).
+  - Commit and push to GitHub.

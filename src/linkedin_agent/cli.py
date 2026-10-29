@@ -3,10 +3,8 @@
 import os
 from datetime import UTC, datetime
 
-from dotenv import load_dotenv
 import typer
-
-load_dotenv()
+from dotenv import load_dotenv
 
 from linkedin_agent.approval.cli import present_draft_for_approval
 from linkedin_agent.approval.gate import ApprovalGate
@@ -18,6 +16,8 @@ from linkedin_agent.llm.base import LLMError
 from linkedin_agent.publisher.linkedin import LinkedInPublisher, LinkedInPublishError
 from linkedin_agent.publisher.oauth import run_oauth_flow
 from linkedin_agent.store.db import Database
+
+load_dotenv()
 
 app = typer.Typer(
     name="agent",

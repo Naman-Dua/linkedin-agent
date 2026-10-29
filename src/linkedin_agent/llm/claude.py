@@ -26,7 +26,7 @@ class ClaudeClient(LLMClient):
         if api_key is not None:
             self.api_key = api_key
         else:
-            self.api_key = os.getenv("LLM_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
+            self.api_key = os.getenv("LLM_API_KEY") or os.getenv("ANTHROPIC_API_KEY") or ""
         self.model = model or os.getenv("LLM_MODEL") or "claude-3-5-sonnet-20241022"
         self.timeout = timeout
 

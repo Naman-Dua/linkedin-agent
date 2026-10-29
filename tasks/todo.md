@@ -135,3 +135,30 @@
   - **Description:** Test rate limiting, 401 handling, and idempotency recovery.
 - [x] **Checkpoint 7: Ready for Production**
   - [x] All tests pass, DRY_RUN test checklist verified
+
+
+---
+
+## Phase 8: Licensing & Documentation Excellence
+
+- [x] **Task 8.1: Add MIT License & Update pyproject.toml**
+  - **Description:** Create `LICENSE` file with standard MIT terms and add license metadata to `pyproject.toml`.
+  - **Acceptance criteria:**
+    - `LICENSE` file exists with Copyright 2026 Naman Dua.
+    - `pyproject.toml` contains `license = { text = "MIT" }` and classifiers.
+  - **Verification:** `pip install -e .` succeeds; `ruff check .` passes.
+
+- [x] **Task 8.2: Elevated Engaging README**
+  - **Description:** Redesign `README.md` with shield badges, terminal mockups, core value pillars, and visual flow.
+  - **Acceptance criteria:**
+    - Badges for License, Python, Tests, Security, Ruff, Mypy.
+    - ASCII terminal demo mockup of `agent run`.
+    - Clear value pillars (Zero Hallucinations, Cryptographic Gate, Omni-Channel).
+    - Preserves all step-by-step API setup instructions.
+  - **Verification:** Markdown renders cleanly and correctly.
+
+- [x] **Task 8.3: Verification & GitHub Sync**
+  - **Description:** Run linters, types, tests, and push cleanly to GitHub repository.
+  - **Acceptance criteria:**
+    - 51 tests pass.
+    - `git push origin master` completes without error.

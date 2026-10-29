@@ -26,7 +26,7 @@ class GeminiClient(LLMClient):
         if api_key is not None:
             self.api_key = api_key
         else:
-            self.api_key = os.getenv("LLM_API_KEY") or os.getenv("GEMINI_API_KEY")
+            self.api_key = os.getenv("LLM_API_KEY") or os.getenv("GEMINI_API_KEY") or ""
         raw_model = (model or os.getenv("LLM_MODEL") or "gemini-3.5-flash").strip()
         if raw_model.startswith("models/"):
             raw_model = raw_model[7:]
