@@ -7,7 +7,8 @@ import typer
 from dotenv import load_dotenv
 
 from linkedin_agent.approval.cli import present_draft_for_approval
-from linkedin_agent.approval.gate import ApprovalGate
+from linkedin_agent.approval.gate import ApprovalGate, compute_sha256
+from linkedin_agent.approval.telegram import TelegramApprovalBot
 from linkedin_agent.context.builder import build_project_context
 from linkedin_agent.context.selector import rank_repositories
 from linkedin_agent.drafter.drafter import generate_drafts
@@ -290,6 +291,78 @@ def suggest(
         typer.secho(f"#{idx} [{item.total_score:.2f}] {item.repo}", fg=color, bold=True)
         typer.echo(f"    • {item.reason.capitalize()}")
     typer.echo("")
+
+
+@app.command(name="bot")
+def bot_cmd(
+    repo: str | None = typer.Option(
+        None, "--repo", "-r", help="Repository to generate and send draft to Telegram"
+    ),
+    variant_no: int = typer.Option(1, "--variant", "-v", help="Variant index to send (1-3)"),
+    listen: bool = typer.Option(
+        True, "--listen/--no-listen", help="Run polling loop to receive approvals/edits"
+    ),
+) -> None:
+    """Send drafts to Telegram and listen for mobile approvals."""
+    db = Database()
+    bot = TelegramApprovalBot(db)
+
+    if not bot.token or not bot.allowed_chat_id:
+        typer.secho(
+            "Error: TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set in .env",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    alert = bot.check_token_expiry_alert()
+    if alert:
+        typer.secho(alert, fg=typer.colors.YELLOW)
+
+    if repo:
+        try:
+            ctx = build_project_context(repo)
+        except GitHubError as e:
+            typer.secho(f"Error fetching context: {e}", fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from e
+
+        try:
+            drafts = generate_drafts(ctx)
+        except LLMError as e:
+            typer.secho(f"Error calling LLM: {e}", fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from e
+
+        if not drafts.variants:
+            typer.secho("No draft variants could be generated.", fg=typer.colors.YELLOW)
+            return
+
+        idx = max(0, min(variant_no - 1, len(drafts.variants) - 1))
+        chosen_variant = drafts.variants[idx]
+        sha = compute_sha256(chosen_variant.text)
+        draft_id = db.save_draft(repo, idx + 1, chosen_variant.text, sha, status="PENDING_APPROVAL")
+        record = db.get_draft(draft_id)
+        if record:
+            import asyncio
+
+            asyncio.run(bot.send_draft(record, chosen_variant))
+            typer.secho(
+                f"\n✓ Draft #{draft_id} for '{repo}' sent to your Telegram!",
+                fg=typer.colors.GREEN,
+                bold=True,
+            )
+            typer.echo("Open your Telegram app to approve, edit, or regenerate.\n")
+
+    if listen:
+        typer.secho(
+            "🤖 Telegram Bot is running in polling mode...",
+            fg=typer.colors.CYAN,
+            bold=True,
+        )
+        typer.echo("Listening for button clicks and edit replies. Press Ctrl+C to stop.\n")
+        try:
+            bot.run_polling()
+        except KeyboardInterrupt:
+            typer.echo("\nBot stopped.")
 
 
 if __name__ == "__main__":

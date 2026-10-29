@@ -7,7 +7,7 @@ import os
 from datetime import UTC, datetime
 from typing import Any
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -201,3 +201,25 @@ class TelegramApprovalBot:
             MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_reply_message)
         )
         return app
+
+    async def send_draft(
+        self, draft: DraftRecord, variant: DraftVariant | None = None
+    ) -> None:
+        """Send formatted draft to the authorized Telegram chat."""
+        if not self.token or not self.allowed_chat_id:
+            raise ValueError("TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be configured.")
+
+        bot = Bot(token=self.token)
+        text = self.format_draft_message(draft, variant)
+        keyboard = self.get_approval_keyboard(draft.id)
+        await bot.send_message(
+            chat_id=self.allowed_chat_id,
+            text=text,
+            parse_mode="HTML",
+            reply_markup=keyboard,
+        )
+
+    def run_polling(self) -> None:
+        """Run bot in polling mode to process callbacks and text replies."""
+        app = self.build_application()
+        app.run_polling()

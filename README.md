@@ -232,6 +232,7 @@ Review and approve drafts from your phone via interactive buttons:
 | `agent suggest` | Rank your repositories by activity and unposted history | `agent suggest --limit 5` |
 | `agent context` | Preview ingested commits, README, and redacted notes | `agent context --repo owner/repo` |
 | `agent draft` | Generate 3 grounded drafts without interactive prompt | `agent draft --repo owner/repo` |
+| `agent bot` | Send draft to Telegram and listen for mobile approvals | `agent bot --repo owner/repo` |
 | `agent run --dry-run` | **Interactive review & approval** (Safe mode) | `agent run --repo owner/repo --dry-run` |
 | `agent run --no-dry-run` | **Live publication** (Requires prior matching approval) | `agent run --repo owner/repo --no-dry-run` |
 
