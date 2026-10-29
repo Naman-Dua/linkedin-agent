@@ -140,3 +140,32 @@ async def test_telegram_callback_and_reply_html_escaping(tmp_path: Path) -> None
     assert "&lt;v2.1&gt; &amp; patched bug" in reply_msg
     assert "<v2.1>" not in reply_msg
 
+
+@pytest.mark.asyncio
+async def test_telegram_handle_callback_duplicate_click_graceful(tmp_path: Path) -> None:
+    from telegram.error import BadRequest
+
+    db = Database(tmp_path / "tg_test.db")
+    bot = TelegramApprovalBot(db, allowed_chat_id="12345678")
+
+    draft_id = db.save_draft(
+        repo="test/repo",
+        variant_no=1,
+        text="A valid post text",
+        text_sha256="hash456",
+        status="PENDING_APPROVAL",
+    )
+
+    update = MagicMock()
+    update.effective_chat.id = 12345678
+    update.callback_query = AsyncMock()
+    update.callback_query.data = f"skip_{draft_id}"
+    update.callback_query.edit_message_text.side_effect = BadRequest(
+        "Message is not modified: content and markup are the same"
+    )
+
+    context = MagicMock()
+    # Should not raise exception
+    await bot.handle_callback(update, context)
+
+
