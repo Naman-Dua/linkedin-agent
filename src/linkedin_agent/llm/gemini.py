@@ -24,7 +24,10 @@ class GeminiClient(LLMClient):
         timeout: float = 30.0,
     ) -> None:
         self.api_key = api_key or os.getenv("LLM_API_KEY") or os.getenv("GEMINI_API_KEY")
-        self.model = model or os.getenv("LLM_MODEL") or "gemini-1.5-pro"
+        raw_model = (model or os.getenv("LLM_MODEL") or "gemini-3.5-flash").strip()
+        if raw_model.startswith("models/"):
+            raw_model = raw_model[7:]
+        self.model = raw_model.lower()
         self.timeout = timeout
 
     def complete(self, system: str, user: str) -> str:
