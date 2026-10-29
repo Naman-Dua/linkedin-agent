@@ -3,7 +3,10 @@
 import os
 from datetime import UTC, datetime
 
+from dotenv import load_dotenv
 import typer
+
+load_dotenv()
 
 from linkedin_agent.approval.cli import present_draft_for_approval
 from linkedin_agent.approval.gate import ApprovalGate
