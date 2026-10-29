@@ -39,3 +39,12 @@ htmlcov/
 .idea/
 *.swp
 *.swo
+
+# Internal planning & agent specifications
+PRD.md
+ARCHITECTURE.md
+IMPLEMENTATION_PLAN.md
+RULES.md
+GEMINI.md
+SKILL.md
+tasks/
