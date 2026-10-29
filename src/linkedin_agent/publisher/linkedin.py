@@ -34,7 +34,7 @@ class LinkedInPublisher:
         self.gate = ApprovalGate(db)
         self.timeout = timeout
         self.api_version = (
-            api_version or os.getenv("LINKEDIN_VERSION") or "202401"
+            api_version or os.getenv("LINKEDIN_VERSION") or "202601"
         )
         self._token = access_token
 
