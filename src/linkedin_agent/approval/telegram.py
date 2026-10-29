@@ -15,6 +15,7 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+from telegram.request import HTTPXRequest
 
 from linkedin_agent.approval.gate import ApprovalGate
 from linkedin_agent.audit.log import audit_log
@@ -195,7 +196,12 @@ class TelegramApprovalBot:
         if not self.token:
             raise ValueError("TELEGRAM_BOT_TOKEN not configured.")
 
-        app = Application.builder().token(self.token).build()
+        request = HTTPXRequest(
+            connect_timeout=30.0,
+            read_timeout=30.0,
+            write_timeout=30.0,
+        )
+        app = Application.builder().token(self.token).request(request).build()
         app.add_handler(CallbackQueryHandler(self.handle_callback))
         app.add_handler(
             MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_reply_message)
@@ -209,7 +215,12 @@ class TelegramApprovalBot:
         if not self.token or not self.allowed_chat_id:
             raise ValueError("TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be configured.")
 
-        bot = Bot(token=self.token)
+        request = HTTPXRequest(
+            connect_timeout=30.0,
+            read_timeout=30.0,
+            write_timeout=30.0,
+        )
+        bot = Bot(token=self.token, request=request)
         text = self.format_draft_message(draft, variant)
         keyboard = self.get_approval_keyboard(draft.id)
         await bot.send_message(
