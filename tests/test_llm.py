@@ -35,6 +35,28 @@ def test_gemini_client_missing_key() -> None:
         client.complete("system", "user")
 
 
+def test_gemini_client_fallback_on_503(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+
+    def mock_post(self: httpx.Client, url: str, **kwargs: Any) -> httpx.Response:
+        req = httpx.Request("POST", url)
+        calls.append(url)
+        if "gemini-3.8-flash" in url:
+            return httpx.Response(503, text='{"error": "high demand"}', request=req)
+        return httpx.Response(
+            200,
+            json={"candidates": [{"content": {"parts": [{"text": '{"variants": ["ok"]}'}]}}]},
+            request=req,
+        )
+
+    monkeypatch.setattr(httpx.Client, "post", mock_post)
+    client = GeminiClient(api_key="fake-key", model="gemini-3.8-flash")
+    res = client.complete("system", "user")
+    assert res == '{"variants": ["ok"]}'
+    assert any("gemini-3.8-flash" in c for c in calls)
+    assert any("gemini-3.5-flash" in c for c in calls)
+
+
 def test_claude_client_success(monkeypatch: pytest.MonkeyPatch) -> None:
     def mock_post(self: httpx.Client, url: str, **kwargs: Any) -> httpx.Response:
         req = httpx.Request("POST", url)

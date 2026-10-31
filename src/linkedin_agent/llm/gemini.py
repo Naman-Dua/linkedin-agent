@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
 from typing import Any
@@ -11,7 +12,10 @@ import httpx
 
 from linkedin_agent.llm.base import LLMClient, LLMError
 
+logger = logging.getLogger(__name__)
+
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.6-flash"]
 
 
 class GeminiClient(LLMClient):
@@ -33,12 +37,9 @@ class GeminiClient(LLMClient):
         self.model = raw_model.lower()
         self.timeout = timeout
 
-    def complete(self, system: str, user: str) -> str:
-        """Call Gemini generateContent endpoint."""
-        if not self.api_key:
-            raise LLMError("Gemini API key not configured. Set LLM_API_KEY or pass api_key.")
-
-        url = f"{GEMINI_API_URL.format(model=self.model)}?key={self.api_key}"
+    def _execute_completion(self, model: str, system: str, user: str) -> str:
+        """Call Gemini generateContent endpoint for a specific model."""
+        url = f"{GEMINI_API_URL.format(model=model)}?key={self.api_key}"
         payload = {
             "system_instruction": {"parts": [{"text": system}]},
             "contents": [{"role": "user", "parts": [{"text": user}]}],
@@ -82,3 +83,31 @@ class GeminiClient(LLMClient):
                 raise LLMError(f"Failed to parse Gemini response JSON: {exc}") from exc
 
         raise LLMError("Failed to get completion from Gemini after retries.")
+
+    def complete(self, system: str, user: str) -> str:
+        """Generate completion with automated fallback on high demand (503/404/429)."""
+        if not self.api_key:
+            raise LLMError("Gemini API key not configured. Set LLM_API_KEY or pass api_key.")
+
+        models_to_try = [self.model]
+        for fb in FALLBACK_MODELS:
+            if fb not in models_to_try:
+                models_to_try.append(fb)
+
+        last_error: Exception | None = None
+        for m in models_to_try:
+            try:
+                return self._execute_completion(m, system, user)
+            except LLMError as exc:
+                last_error = exc
+                err_msg = str(exc)
+                if any(code in err_msg for code in ("503", "404", "429")):
+                    logger.warning(
+                        "Gemini model %s unavailable (%s). Trying fallback...", m, err_msg[:60]
+                    )
+                    continue
+                raise
+
+        if last_error:
+            raise last_error
+        raise LLMError("Gemini completion failed across all available models.")
